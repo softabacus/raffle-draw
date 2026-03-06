@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raffle Draw</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0f0f1a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #c9a84c;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 24px;
+    }
+
+    .range-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .range-row .field {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .range-row .btn-secondary {
+      flex: 0 0 auto;
+      width: auto;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #aaa;
+    }
+
+    input[type="number"] {
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #c9a84c;
+    }
+
+    .btn {
+      padding: 11px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-secondary {
+      background: #2a2a4a;
+      color: #aaa;
+      width: 100%;
+    }
+
+    .btn-secondary:hover {
+      background: #3a3a5a;
+      color: #fff;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .stats span { color: #aaa; }
+
+    /* Draw button */
+    .draw-wrap {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .btn-draw {
+      background: linear-gradient(135deg, #c9a84c, #e8c96a);
+      color: #0f0f1a;
+      font-size: 1.1rem;
+      padding: 16px 48px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+    }
+
+    .btn-draw:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(201,168,76,0.5);
+    }
+
+    .btn-draw:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-draw:disabled {
+      background: #2a2a4a;
+      color: #555;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Result display */
+    .result-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+      margin-bottom: 24px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .result-number {
+      font-size: 5rem;
+      font-weight: 700;
+      color: #c9a84c;
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .result-number.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .result-number.spinning {
+      opacity: 1;
+      transform: scale(1);
+      animation: spin-num 0.08s linear infinite;
+    }
+
+    @keyframes spin-num {
+      0%   { color: #c9a84c; }
+      50%  { color: #e8c96a; }
+      100% { color: #c9a84c; }
+    }
+
+    /* History */
+    .history-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .history-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+    }
+
+    .history-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 40px;
+    }
+
+    .history-num {
+      background: #2a2a4a;
+      color: #c9a84c;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .empty-msg {
+      color: #444;
+      font-size: 0.85rem;
+      align-self: center;
+    }
+
+    .exhausted {
+      color: #e84c4c;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .error {
+      color: #e84c4c;
+      font-size: 0.8rem;
+      margin-top: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Raffle Draw</h1>
+  <p class="subtitle">The Beacon of Lansdown Project Raffle Draw - Written by Martin Man</p>
+
+  <div class="card">
+    <div class="range-row">
+      <div class="field">
+        <label>From</label>
+        <input type="number" id="minVal" value="1" min="0">
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input type="number" id="maxVal" value="100" min="0">
+      </div>
+      <button class="btn btn-secondary" onclick="initPool()">Set Range</button>
+    </div>
+    <p class="error" id="rangeError">Max must be greater than Min.</p>
+    <div class="stats">
+      <div>Pool size: <span id="poolSize">100</span></div>
+      <div>Remaining: <span id="remaining">100</span></div>
+      <div>Drawn: <span id="drawnCount">0</span></div>
+    </div>
+    <div class="draw-wrap">
+      <button class="btn-draw" id="drawBtn" onclick="draw()">Draw</button>
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-label" id="resultLabel">Press Draw to begin</div>
+    <div class="result-number" id="resultNumber">--</div>
+  </div>
+
+  <div class="history-card">
+    <div class="history-header">
+      <div class="history-title">Draw History</div>
+      <button class="btn btn-secondary" style="width:auto;padding:6px 14px;font-size:0.8rem;" onclick="reset()">Reset</button>
+    </div>
+    <div class="history-grid" id="historyGrid">
+      <span class="empty-msg">No draws yet</span>
+    </div>
+  </div>
+
+<script>
+  let pool = [];
+  let history = [];
+  let spinning = false;
+
+  // Cryptographically random integer in [0, n)
+  function secureRandInt(n) {
+    const arr = new Uint32Array(1);
+    const max = Math.floor(0xFFFFFFFF / n) * n;
+    let r;
+    do {
+      crypto.getRandomValues(arr);
+      r = arr[0];
+    } while (r >= max);
+    return r % n;
+  }
+
+  function initPool() {
+    const min = parseInt(document.getElementById('minVal').value);
+    const max = parseInt(document.getElementById('maxVal').value);
+    const err = document.getElementById('rangeError');
+
+    if (isNaN(min) || isNaN(max) || max <= min) {
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+
+    pool = [];
+    for (let i = min; i <= max; i++) pool.push(i);
+    history = [];
+
+    updateStats();
+    renderHistory();
+    setResult('--', 'Press Draw to begin');
+    document.getElementById('drawBtn').disabled = false;
+    document.getElementById('drawBtn').textContent = 'Draw';
+  }
+
+  function draw() {
+    if (spinning || pool.length === 0) return;
+    spinning = true;
+
+    const btn = document.getElementById('drawBtn');
+    btn.disabled = true;
+
+    const el = document.getElementById('resultNumber');
+    el.classList.remove('show');
+    el.classList.add('spinning');
+    document.getElementById('resultLabel').textContent = 'Drawing...';
+
+    // Pick the winner now using crypto random
+    const idx = secureRandInt(pool.length);
+    const winner = pool[idx];
+    pool.splice(idx, 1);
+    history.unshift(winner);
+
+    // Spin for 1.5 seconds showing random numbers, then reveal
+    let spins = 0;
+    const totalSpins = 18;
+    const interval = setInterval(() => {
+      // Show random numbers from remaining pool + winner for drama
+      const fake = (pool.length > 0)
+        ? pool[secureRandInt(pool.length)]
+        : Math.floor(Math.random() * 1000);
+      el.textContent = fake;
+      spins++;
+      if (spins >= totalSpins) {
+        clearInterval(interval);
+        el.classList.remove('spinning');
+        el.textContent = winner;
+        el.classList.add('show');
+        document.getElementById('resultLabel').textContent = 'Winner!';
+
+        updateStats();
+        renderHistory();
+
+        if (pool.length === 0) {
+          btn.disabled = true;
+          btn.textContent = 'Pool Empty';
+          document.getElementById('resultLabel').textContent = 'All numbers drawn!';
+        } else {
+          btn.disabled = false;
+        }
+        spinning = false;
+      }
+    }, 80);
+  }
+
+  function reset() {
+    initPool();
+  }
+
+  function setResult(num, label) {
+    const el = document.getElementById('resultNumber');
+    el.classList.remove('show', 'spinning');
+    el.textContent = num;
+    document.getElementById('resultLabel').textContent = label;
+  }
+
+  function updateStats() {
+    const min = parseInt(document.getElementById('minVal').value);
+    const max = parseInt(document.getElementById('maxVal').value);
+    const total = (isNaN(min) || isNaN(max)) ? 0 : max - min + 1;
+    document.getElementById('poolSize').textContent = total;
+    document.getElementById('remaining').textContent = pool.length;
+    document.getElementById('drawnCount').textContent = history.length;
+  }
+
+  function renderHistory() {
+    const grid = document.getElementById('historyGrid');
+    if (history.length === 0) {
+      grid.innerHTML = '<span class="empty-msg">No draws yet</span>';
+      return;
+    }
+    grid.innerHTML = history.map(n => `<div class="history-num">${n}</div>`).join('');
+  }
+
+  // Initialize on load
+  initPool();
+</script>
+</body>
+</html>
